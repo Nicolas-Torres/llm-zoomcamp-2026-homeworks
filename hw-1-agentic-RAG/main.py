@@ -2,7 +2,7 @@
 LLM Zoomcamp 2026 - Homework 1: Agentic RAG
 """
 
-from gitsource import GithubRepositoryDataReader
+from gitsource import GithubRepositoryDataReader, chunk_documents
 from minsearch import Index
 from openai import OpenAI
 
@@ -115,3 +115,8 @@ tokens = getattr(usage, "input_tokens", None) or getattr(usage, "prompt_tokens",
 
 print("Q3: RAG")
 print(" -> input tokens:", tokens)
+
+
+chunks = chunk_documents(documents, size=2000, step=1000)
+print("Q4: Chunking")
+print(" -> number of chunks:", len(chunks))
