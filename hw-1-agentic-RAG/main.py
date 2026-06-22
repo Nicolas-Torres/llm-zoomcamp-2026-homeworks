@@ -1,19 +1,24 @@
-from anthropic import Anthropic
-from dotenv import load_dotenv
+"""
+LLM Zoomcamp 2026 - Homework 1: Agentic RAG
+"""
 
-load_dotenv()
+from gitsource import GithubRepositoryDataReader
 
-client = Anthropic()
-
-message = client.messages.create(
-    max_tokens=1024,
-    messages=[
-        {
-            "role": "user",
-            "content": "Hello, Claude",
-        }
-    ],
-    model="claude-haiku-4-5",
+reader = GithubRepositoryDataReader(
+    repo_owner="DataTalksClub",
+    repo_name="llm-zoomcamp",
+    commit_id="8c1834d",
+    allowed_extensions={"md"},
+    filename_filter=lambda path: "/lessons/" in path,
 )
 
-print(message.content)
+files = reader.read()
+
+documents = []
+
+for file in files:
+    doc = file.parse()
+    documents.append(doc)
+
+print("Q1: How many lesson pages are in the dataset?")
+print(" -> lesson pages:", len(documents))
