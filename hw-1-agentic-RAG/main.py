@@ -11,6 +11,10 @@ import json
 
 load_dotenv()
 
+# ---------------------------------------------------------------------------
+# Q1. How many lesson pages are in the dataset?
+# ---------------------------------------------------------------------------
+
 reader = GithubRepositoryDataReader(
     repo_owner="DataTalksClub",
     repo_name="llm-zoomcamp",
@@ -30,6 +34,9 @@ for file in files:
 print("Q1: How many lesson pages are in the dataset?")
 print(" -> lesson pages:", len(documents))
 
+# ---------------------------------------------------------------------------
+# Q2. Indexing and searching
+# ---------------------------------------------------------------------------
 
 QUERY = "How does the agentic loop keep calling the model until it stops?"
 
@@ -55,6 +62,9 @@ filename = results[0]["filename"]
 print("Q2: Indexing and searching")
 print(" -> filename:", filename)
 
+# ---------------------------------------------------------------------------
+# Q3. RAG
+# ---------------------------------------------------------------------------
 
 MODEL = "gpt-5.4-mini"
 
@@ -117,11 +127,17 @@ tokens_q3 = getattr(usage, "input_tokens", None) or getattr(usage, "prompt_token
 print("Q3: RAG")
 print(" -> input tokens:", tokens_q3)
 
+# ---------------------------------------------------------------------------
+# Q4. Chunking
+# ---------------------------------------------------------------------------
 
 chunks = chunk_documents(documents, size=2000, step=1000)
 print("Q4: Chunking")
 print(" -> number of chunks:", len(chunks))
 
+# ---------------------------------------------------------------------------
+# Q5. RAG with chunking
+# ---------------------------------------------------------------------------
 
 chunk_index = Index(text_fields=["content"], keyword_fields=["filename"])
 chunk_index.fit(chunks)
@@ -134,6 +150,9 @@ tokens = getattr(usage, "input_tokens", None) or getattr(usage, "prompt_tokens",
 print("Q5: RAG with chunking:")
 print(" -> ratio Q3/Q5:", round(tokens_q3 / tokens, 1))
 
+# ---------------------------------------------------------------------------
+# Q6. Turning it into an agent
+# ---------------------------------------------------------------------------
 
 def search(query: str) -> list:
         """Search the course lessons for relevant passages."""
