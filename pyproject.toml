@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "anthropic>=0.111.0",
     "gitsource>=0.0.5",
+    "minsearch>=0.1.1",
     "python-dotenv>=1.2.2",
 ]
 
