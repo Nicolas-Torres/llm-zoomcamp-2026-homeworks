@@ -4,6 +4,11 @@ LLM Zoomcamp 2026 - Homework 1: Agentic RAG
 
 from gitsource import GithubRepositoryDataReader
 from minsearch import Index
+from openai import OpenAI
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 reader = GithubRepositoryDataReader(
     repo_owner="DataTalksClub",
@@ -48,3 +53,65 @@ filename = results[0]["filename"]
 
 print("Q2: Indexing and searching")
 print(" -> filename:", filename)
+
+
+MODEL = "gpt-5.4-mini"
+
+INSTRUCTIONS = """
+    Your task is to answer questions from the course participants based on the provided context.
+    Use the context to find relevant information and provide accurate answers. If the answer is not found in the context, respond with "I don't know."
+""".strip()
+
+PROMPT_TEMPLATE = """
+    QUESTION: {question}
+    CONTEXT: {context}
+""".strip()
+
+class RAG:
+    def __init__(self, index, llm_client, model=MODEL):
+        self.index = index
+        self.llm_client = llm_client
+        self.model = model
+ 
+    def search(self, query, num_results=5):
+        return self.index.search(query, num_results=num_results)
+ 
+    def build_context(self, search_results):
+        lines = []
+        for doc in search_results:
+            lines.append(doc["filename"])
+            lines.append(doc["content"])
+            lines.append("")
+        return "\n".join(lines).strip()
+ 
+    def build_prompt(self, query, search_results):
+        context = self.build_context(search_results)
+        return PROMPT_TEMPLATE.format(question=query, context=context)
+ 
+    def llm(self, prompt):
+        messages = [
+            {
+                "role": "developer",
+                "content": INSTRUCTIONS
+            },
+            {
+                "role": "user",
+                "content": prompt
+            },
+        ]
+        return self.llm_client.responses.create(model=self.model, input=messages)
+ 
+    def rag(self, query):
+        search_results = self.search(query)
+        prompt = self.build_prompt(query, search_results)
+        response = self.llm(prompt)
+        return response.output_text, response.usage
+
+client = OpenAI()
+
+rag = RAG(index=index, llm_client=client)
+answer, usage = rag.rag(QUERY)
+tokens = getattr(usage, "input_tokens", None) or getattr(usage, "prompt_tokens", None)
+
+print("Q3: RAG")
+print(" -> input tokens:", tokens)
