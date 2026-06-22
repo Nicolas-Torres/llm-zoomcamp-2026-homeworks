@@ -7,6 +7,7 @@ from minsearch import Index
 from openai import OpenAI
 
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 
@@ -132,3 +133,77 @@ tokens = getattr(usage, "input_tokens", None) or getattr(usage, "prompt_tokens",
 
 print("Q5: RAG with chunking:")
 print(" -> ratio Q3/Q5:", round(tokens_q3 / tokens, 1))
+
+
+def search(query: str) -> list:
+        """Search the course lessons for relevant passages."""
+        results = chunk_index.search(query, num_results=5)
+
+        formatted_results = []
+
+        for result in results:
+            clean_data = {
+                "filename": result["filename"],
+                "content": result["content"]
+            }
+            formatted_results.append(clean_data)
+
+        return formatted_results
+ 
+tools = [{
+    "type": "function",
+    "name": "search",
+    "description": "Search the course lessons for relevant passages.",
+    "parameters": {
+        "type": "object",
+        "properties": {"query": {"type": "string"}},
+        "required": ["query"],
+    },
+}]
+
+agent_instructions = (
+    "You're a course teaching assistant. Answer the student's question "
+    "using the search tool. Make multiple searches with different keywords "
+    "before answering."
+)
+question = "How does the agentic loop work, and how is it different from plain RAG?"
+
+messages = [
+    {"role": "developer", "content": agent_instructions},
+    {"role": "user", "content": question},
+]
+
+search_calls = 0
+
+MAX_ITERATIONS = 10
+
+for _ in range(MAX_ITERATIONS):
+    response = client.responses.create(
+        model=MODEL,
+        input=messages, 
+        tools=tools
+    )
+    messages += response.output
+
+    function_calls = []
+
+    for element in response.output:
+        if element.type == "function_call":
+            function_calls.append(element)
+
+    if not function_calls:
+        break
+
+    for fc in function_calls:
+        args = json.loads(fc.arguments)
+        if fc.name == "search":
+            search_calls += 1
+            result = search(**args)
+            messages.append({
+                "type": "function_call_output",
+                "call_id": fc.call_id,
+                "output": json.dumps(result),
+            })
+
+print("Q6: Turning it into an agent")
+print(" -> number of calls:", search_calls)
