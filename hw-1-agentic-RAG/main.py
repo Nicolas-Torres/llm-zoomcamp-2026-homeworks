@@ -111,12 +111,24 @@ client = OpenAI()
 
 rag = RAG(index=index, llm_client=client)
 answer, usage = rag.rag(QUERY)
-tokens = getattr(usage, "input_tokens", None) or getattr(usage, "prompt_tokens", None)
+tokens_q3 = getattr(usage, "input_tokens", None) or getattr(usage, "prompt_tokens", None)
 
 print("Q3: RAG")
-print(" -> input tokens:", tokens)
+print(" -> input tokens:", tokens_q3)
 
 
 chunks = chunk_documents(documents, size=2000, step=1000)
 print("Q4: Chunking")
 print(" -> number of chunks:", len(chunks))
+
+
+chunk_index = Index(text_fields=["content"], keyword_fields=["filename"])
+chunk_index.fit(chunks)
+
+rag = RAG(chunk_index, llm_client=client)
+answer, usage = rag.rag(QUERY)
+
+tokens = getattr(usage, "input_tokens", None) or getattr(usage, "prompt_tokens", None)
+
+print("Q5: RAG with chunking:")
+print(" -> ratio Q3/Q5:", round(tokens_q3 / tokens, 1))
