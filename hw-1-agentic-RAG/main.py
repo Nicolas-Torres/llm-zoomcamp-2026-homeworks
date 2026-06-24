@@ -78,13 +78,15 @@ PROMPT_TEMPLATE = """
     CONTEXT: {context}
 """.strip()
 
+DEFAULT_TOP_K = 5
+
 class RAG:
     def __init__(self, index, llm_client, model=MODEL):
         self.index = index
         self.llm_client = llm_client
         self.model = model
  
-    def search(self, query, num_results=5):
+    def search(self, query, num_results=DEFAULT_TOP_K):
         return self.index.search(query, num_results=num_results)
  
     def build_context(self, search_results):
@@ -99,7 +101,7 @@ class RAG:
         context = self.build_context(search_results)
         return PROMPT_TEMPLATE.format(question=query, context=context)
  
-    def llm(self, prompt):
+    def call_llm(self, prompt):
         messages = [
             {
                 "role": "developer",
@@ -112,16 +114,16 @@ class RAG:
         ]
         return self.llm_client.responses.create(model=self.model, input=messages)
  
-    def rag(self, query):
+    def ask(self, query):
         search_results = self.search(query)
         prompt = self.build_prompt(query, search_results)
-        response = self.llm(prompt)
+        response = self.call_llm(prompt)
         return response.output_text, response.usage
 
 client = OpenAI()
 
-rag = RAG(index=index, llm_client=client)
-answer, usage = rag.rag(QUERY)
+rag_docs = RAG(index=index, llm_client=client)
+answer, usage = rag_docs.ask(QUERY)
 tokens_q3 = getattr(usage, "input_tokens", None) or getattr(usage, "prompt_tokens", None)
 
 print("Q3: RAG")
@@ -142,8 +144,8 @@ print(" -> number of chunks:", len(chunks))
 chunk_index = Index(text_fields=["content"], keyword_fields=["filename"])
 chunk_index.fit(chunks)
 
-rag = RAG(chunk_index, llm_client=client)
-answer, usage = rag.rag(QUERY)
+rag_chunk = RAG(chunk_index, llm_client=client)
+answer, usage = rag_chunk.ask(QUERY)
 
 tokens = getattr(usage, "input_tokens", None) or getattr(usage, "prompt_tokens", None)
 
