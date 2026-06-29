@@ -98,3 +98,33 @@ for i, r in enumerate(results_q4):
     print(f"    [{i}] {r['filename']}  (start={r['start']})")
  
 print(f"\n -> Primer resultado  : {results_q4[0]['filename']}")
+
+
+# ---------------------------------------------------------------------------
+# Q5. Text search vs vector search
+# ---------------------------------------------------------------------------
+
+text_idx = Index(text_fields=["content"], keyword_fields=["filename"])
+text_idx.fit(chunks)
+
+QUERY_Q5 = "How do I store vectors in PostgreSQL?"
+v_q5 = embedder.encode(QUERY_Q5)
+
+vector_results_q5 = vs.search(v_q5, num_results=5)
+text_results_q5   = text_idx.search(QUERY_Q5, num_results=5)
+
+vector_files_q5 = {r["filename"] for r in vector_results_q5}
+text_files_q5   = {r["filename"] for r in text_results_q5}
+
+print("\nQ5: Text search vs vector search")
+print(" -> Top 5 - Vector search:")
+for i, r in enumerate(vector_results_q5):
+    print(f"  [{i}] {r['filename']}")
+ 
+print("\n -> Top 5 - Text search:")
+for i, r in enumerate(text_results_q5):
+    print(f"  [{i}] {r['filename']}")
+
+only_in_vector = vector_files_q5 - text_files_q5
+only_in_text   = text_files_q5   - vector_files_q5
+print(f"\n -> In vector but not in text: {only_in_vector}")
