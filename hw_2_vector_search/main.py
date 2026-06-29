@@ -77,3 +77,24 @@ print(f" -> # Chunk             : {best_idx}")
 print(f" -> filename            : {best_chunk['filename']}")
 print(f" -> score               : {scores[best_idx]:.4f}")
 
+
+# ---------------------------------------------------------------------------
+# Q4. Vector search with minsearch
+# ---------------------------------------------------------------------------
+
+vs = VectorSearch(keyword_fields=["filename"])
+vs.fit(X, chunks)
+
+QUERY_Q4 = "What metric do we use to evaluate a search engine?"
+
+vector_q4 = embedder.encode(QUERY_Q4)
+
+results_q4 = vs.search(vector_q4, num_results=5)
+
+print("\nQ4: Vector search with minsearch")
+print(f" -> Query: {QUERY_Q4!r}")
+print("\n -> Top 5 resultados (vector search):")
+for i, r in enumerate(results_q4):
+    print(f"    [{i}] {r['filename']}  (start={r['start']})")
+ 
+print(f"\n -> Primer resultado  : {results_q4[0]['filename']}")
