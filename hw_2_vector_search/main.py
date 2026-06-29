@@ -128,3 +128,59 @@ for i, r in enumerate(text_results_q5):
 only_in_vector = vector_files_q5 - text_files_q5
 only_in_text   = text_files_q5   - vector_files_q5
 print(f"\n -> In vector but not in text: {only_in_vector}")
+
+
+# ---------------------------------------------------------------------------
+# Q6. Hybrid search (RRF)
+# ---------------------------------------------------------------------------
+
+def rrf(result_lists, k=60, num_results=5):
+    """
+    Reciprocal Rank Fusion.
+ 
+    Args:
+        result_lists: lista de listas de dicts, cada una rankeada por score.
+        k:            constante de aplanado (default=60, del paper original).
+        num_results:  cuántos resultados devolver.
+ 
+    Returns:
+        Lista de dicts rankeados por score RRF descendente.
+    """
+    scores: dict = {}
+    docs:   dict = {}
+ 
+    for results in result_lists:
+        for rank, doc in enumerate(results):
+            key = (doc["filename"], doc["start"])
+            scores[key] = scores.get(key, 0) + 1 / (k + rank)
+            docs[key] = doc
+ 
+    ranked = sorted(scores, key=scores.get, reverse=True)
+    return [docs[key] for key in ranked[:num_results]]
+
+
+QUERY_Q6 = "How do I give the model access to tools?"
+v_q6 = embedder.encode(QUERY_Q6)
+ 
+vector_results_q6 = vs.search(v_q6, num_results=5)
+text_results_q6   = text_idx.search(QUERY_Q6, num_results=5)
+hybrid_results_q6 = rrf([vector_results_q6, text_results_q6])
+ 
+
+print("\nQ6: Hybrid search (RRF)")
+
+print(f" -> Query: {QUERY_Q6!r}\n")
+ 
+print(" -> Top 5 - Vector search:")
+for i, r in enumerate(vector_results_q6):
+    print(f"  [{i}] {r['filename']}")
+ 
+print("\n -> Top 5 - Text search:")
+for i, r in enumerate(text_results_q6):
+    print(f"  [{i}] {r['filename']}")
+ 
+print("\n -> Top 5 - Hybrid (RRF):")
+for i, r in enumerate(hybrid_results_q6):
+    print(f"  [{i}] {r['filename']}")
+ 
+print(f"\n -> First result RRF: {hybrid_results_q6[0]['filename']}")
