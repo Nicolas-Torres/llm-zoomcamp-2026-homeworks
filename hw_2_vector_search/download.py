@@ -13,7 +13,7 @@ ONNX_CANDIDATES = [
     "model.onnx",
 ]
 
-def download(repo, dest="models"):
+def download(repo, dest="hw_2_vector_search/models"):
     dest = Path(dest) / repo
     dest.mkdir(parents=True, exist_ok=True)
 
